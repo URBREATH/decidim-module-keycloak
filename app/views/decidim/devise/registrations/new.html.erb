@@ -1,0 +1,23 @@
+<% add_decidim_page_title(t(".sign_up")) %>
+
+<% content_for :devise_links do %>
+  <%= render "decidim/devise/shared/links" %>
+<% end %>
+
+<%= render layout: "layouts/decidim/shared/layout_center" do %>
+  <div class="flex justify-center">
+    <h1 class="title-decorator my-12"><%= t("decidim.devise.registrations.new.sign_up") %></h1>
+  </div>
+
+
+ 
+
+
+  <% cache current_organization do %>
+    <%= render "decidim/devise/shared/omniauth_buttons" %>
+  <% end %>
+
+  
+<% end %>
+
+<%= render "decidim/devise/shared/newsletter_modal" %>

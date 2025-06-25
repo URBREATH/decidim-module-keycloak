@@ -24,6 +24,12 @@ module Decidim
         end
       end
 
+         initializer "keycloak.add_routes" do |app|
+            app.routes.append do
+              post "/keycloak_token_login", to: "keycloak_token_sessions#create"
+            end
+      end
+
       config.to_prepare do
         class OmniAuth::Strategies::KeycloakOpenId
           uid { raw_info["preferred_username"] }
@@ -38,9 +44,6 @@ module Decidim
         end
       end
 
-      initializer "decidim_keycloak.webpacker.assets_path" do
-        Decidim.register_assets_path File.expand_path("app/packs", root)
-      end
     end
   end
 end

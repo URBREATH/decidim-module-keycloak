@@ -1,6 +1,5 @@
 # Decidim::Keycloak
 
-**Provided by:** Platoniq
 
 ***
 

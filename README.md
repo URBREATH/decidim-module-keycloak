@@ -1,131 +1,74 @@
 # Decidim::Keycloak
 
-OmniAuth strategy for Keycloak.
+**Provided by:** Platoniq
 
-![Login with Keycloak](examples/login.png)
+***
 
-## Installation
+## Description
 
-Add this line to your application's Gemfile:
+This tool provides an **OmniAuth strategy for Keycloak**, enabling user authentication through a Keycloak server within a Decidim application. It seamlessly integrates Keycloak as an identity provider.
 
-```ruby
-gem "decidim-keycloak", git: "https://github.com/Platoniq/decidim-module-keycloak", branch: "main"
-```
+***
 
-And then execute:
+## Images
 
-```bash
-bundle
-```
+*Login screen showing the Keycloak option:*
+![Login with Keycloak](https://raw.githubusercontent.com/Platoniq/decidim-module-keycloak/main/examples/login.png)
 
-## Configuration
+*System configuration for the Keycloak module:*
+![System Configuration](https://raw.githubusercontent.com/Platoniq/decidim-module-keycloak/main/examples/system_conf.gif)
 
-Add to your `config/secrets.yml` the OAuth keys:
+***
 
-```yaml
-  omniauth:
-    keycloakopenid:
-      enabled: true
-      icon_path: media/images/keycloak_logo.svg
-      client_id: <%= ENV["OMNIAUTH_KEYCLOAK_CLIENT_ID"] %>
-      client_secret: <%= ENV["OMNIAUTH_KEYCLOAK_CLIENT_SECRET"] %>
-      site: <%= ENV["OMNIAUTH_KEYCLOAK_SITE"] %>
-      realm: <%= ENV["OMNIAUTH_KEYCLOAK_REALM"] %>
-```
+## Installation Prerequisites
 
-And add these environment variables:
+Before installing this module, ensure you have a working **Decidim application** with its basic dependencies, such as **Ruby** and **PostgreSQL**.
 
-```
-KEYCLOAK_CLIENT_ID=xxxx
-KEYCLOAK_CLIENT_SECRET=xxxx
-KEYCLOAK_SITE=xxxx
-KEYCLOAK_REALM=xxxx
-```
+***
 
-You can use different values by organization. You only need to configure it in `/system/organizations/:id/edit`
+## Installation Instructions
 
-![Login with Keycloak](examples/system_conf.gif)
+Follow these steps to deploy and configure the module:
 
-## Contributing
+1.  **Add the gem to your Gemfile**. Open your application's `Gemfile` and add the following line:
+    ```ruby
+    gem "decidim-keycloak", git: "[https://github.com/Platoniq/decidim-module-keycloak](https://github.com/Platoniq/decidim-module-keycloak)", branch: "main"
+    ```
 
-See [Decidim](https://github.com/decidim/decidim).
+2.  **Install the gem**. Run the bundler from your terminal to install the new dependency:
+    ```bash
+    bundle
+    ```
 
-### Developing
+3.  **Configure secrets**. Add your Keycloak OAuth credentials to the `config/secrets.yml` file.
+    ```yaml
+      omniauth:
+        keycloakopenid:
+          enabled: true
+          icon_path: media/images/keycloak_logo.svg
+          client_id: <%= ENV["KEYCLOAK_CLIENT_ID"] %>
+          client_secret: <%= ENV["KEYCLOAK_CLIENT_SECRET"] %>
+          site: <%= ENV["KEYCLOAK_SITE"] %>
+          realm: <%= ENV["KEYCLOAK_REALM"] %>
+    ```
 
-To start contributing to this project, first:
+4.  **Set Environment Variables**. Define the following environment variables in your deployment environment. You can also configure these values directly in the Decidim admin panel for each organization.
+    ```
+    KEYCLOAK_CLIENT_ID=your-client-id
+    KEYCLOAK_CLIENT_SECRET=your-client-secret
+    KEYCLOAK_SITE=[https://your-keycloak-server.com](https://your-keycloak-server.com)
+    KEYCLOAK_REALM=your-realm-name
+    ```
 
-- Install the basic dependencies (such as Ruby and PostgreSQL)
-- Clone this repository
-
-Decidim's main repository also provides a Docker configuration file if you
-prefer to use Docker instead of installing the dependencies locally on your
-machine.
-
-You can create the development app by running the following commands after
-cloning this project:
-
-```bash
-$ bundle
-$ DATABASE_USERNAME=<username> DATABASE_PASSWORD=<password> bundle exec rake development_app
-```
-
-Note that the database user has to have rights to create and drop a database in
-order to create the dummy test app database.
-
-Then to test how the module works in Decidim, start the development server:
-
-```bash
-$ cd development_app
-$ DATABASE_USERNAME=<username> DATABASE_PASSWORD=<password> bundle exec rails s
-```
-
-In case you are using [rbenv](https://github.com/rbenv/rbenv) and have the
-[rbenv-vars](https://github.com/rbenv/rbenv-vars) plugin installed for it, you
-can add the environment variables to the root directory of the project in a file
-named `.rbenv-vars`. If these are defined for the environment, you can omit
-defining these in the commands shown above.
-
-#### Code Styling
-
-Please follow the code styling defined by the different linters that ensure we
-are all talking with the same language collaborating on the same project. This
-project is set to follow the same rules that Decidim itself follows.
-
-[Rubocop](https://rubocop.readthedocs.io/) linter is used for the Ruby language.
-
-You can run the code styling checks by running the following commands from the
-console:
-
-```
-$ bundle exec rubocop
-```
-
-To ease up following the style guide, you should install the plugin to your
-favorite editor, such as:
-
-- Atom - [linter-rubocop](https://atom.io/packages/linter-rubocop)
-- Sublime Text - [Sublime RuboCop](https://github.com/pderichs/sublime_rubocop)
-- Visual Studio Code - [Rubocop for Visual Studio Code](https://github.com/misogi/vscode-ruby-rubocop)
-
-### Testing
-
-To run the tests run the following in the gem development path:
-
-```bash
-$ bundle
-$ DATABASE_USERNAME=<username> DATABASE_PASSWORD=<password> bundle exec rake test_app
-$ DATABASE_USERNAME=<username> DATABASE_PASSWORD=<password> bundle exec rspec
-```
-
-Note that the database user has to have rights to create and drop a database in
-order to create the dummy test app database.
-
-In case you are using [rbenv](https://github.com/rbenv/rbenv) and have the
-[rbenv-vars](https://github.com/rbenv/rbenv-vars) plugin installed for it, you
-can add these environment variables to the root directory of the project in a
-file named `.rbenv-vars`. In this case, you can omit defining these in the
-commands shown above.
+***
 
 ## License
 
-This engine is distributed under the [GNU AFFERO GENERAL PUBLIC LICENSE](LICENSE-AGPLv3.txt).
+This project is licensed under the **GNU AFFERO GENERAL PUBLIC LICENSE v3.0**. See the [LICENSE-AGPLv3.txt](https://github.com/Platoniq/decidim-module-keycloak/blob/main/LICENSE-AGPLv3.txt) file for details.
+
+***
+
+## External technical resources
+
+-   **[Source Code Repository](https://github.com/Platoniq/decidim-module-keycloak)**: The official GitHub repository for this module.
+-   **[Decidim Project](https://github.com/decidim/decidim)**: The main repository for the Decidim framework.

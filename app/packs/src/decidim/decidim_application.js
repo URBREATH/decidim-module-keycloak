@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Nascondi footer
   document.querySelector("footer")?.setAttribute("hidden", true);
+  document.querySelector("header")?.setAttribute("hidden", true);
 
   window.addEventListener("message", (event) => {
     if (event.origin !== "http://localhost:8080") return;

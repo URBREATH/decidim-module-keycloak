@@ -52,10 +52,11 @@ module Decidim
       end
 
       def jwks_keys
-        uri = URI("https://keycloak-dev.urbreath.tech/auth/realms/urbreath-auth/protocol/openid-connect/certs")
+        uri = URI(ENV.fetch("KEYCLOAK_JWKS_URI"))
         response = Net::HTTP.get(uri)
         JSON.parse(response)["keys"]
       end
+
       
 
       def user_from_token

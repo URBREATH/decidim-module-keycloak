@@ -8,27 +8,50 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("footer")?.setAttribute("hidden", true);
   document.querySelector("header")?.setAttribute("hidden", true);
 
-  window.addEventListener("message", (event) => {
-    if (event.origin !== "http://localhost:8080") return;
+ const searchElement = document.querySelector(".main-bar__search");
+const container = document.querySelector("#home__menu .home__menu__container");
 
-    const token = event.data?.accessToken;
-    if (!token) {
-      console.warn("Token non ricevuto:", event.data);
-      return;
-    }
+if (searchElement && container) {
+  container.appendChild(searchElement);
+  
+  // Aggiungi padding e border radius
+  searchElement.style.cssText = `
+    margin: 1em
+    border-radius: 6px;
+  `;
+  
+  // Trova e stilizza l'icona di ricerca
+  const searchIcon = searchElement.querySelector('svg, .icon, [class*="icon"], [class*="search"]');
+  if (searchIcon) {
+    searchIcon.style.cssText = `
+      color: white;
+      fill: white;
+    `;
+  }
+}
+ window.addEventListener("message", (event) => {
 
-    alert("Token ricevuto: " + token);
+  const token = event.data?.accessToken;
+  if (!token) {
+    console.warn("Token non ricevuto:", event.data);
+    return;
+  }
 
-    if (!sessionStorage.getItem("embedded_logged_in")) {
-      fetch("/keycloak_token_login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content || "",
-        },
-        credentials: "include",
-        body: JSON.stringify({ token }),
-      })
+
+  
+
+  alert("Token ricevuto: " + token);
+
+  if (!sessionStorage.getItem("embedded_logged_in")) {
+    fetch("/keycloak_token_login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content || "",
+      },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    })
       .then(res => res.text())
       .then(text => {
         if (text.includes("success")) {
@@ -37,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
       .catch(console.error);
-    }
-  });
+  }
+});
+
 });

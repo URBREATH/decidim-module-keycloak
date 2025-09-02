@@ -1,101 +1,84 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const EMBEDDED_KEY = "embedded_logged_in";
   const urlParams = new URLSearchParams(window.location.search);
-  let isEmbedded = urlParams.get("embedded") === "true";
+  let isEmbedded = false;
 
-  if (isEmbedded) applyEmbeddedStyles();
-
-  function applyEmbeddedStyles() {
+  const applyEmbeddedStyles = () => {
     document.querySelector("footer")?.setAttribute("hidden", true);
     document.querySelector("header")?.setAttribute("hidden", true);
 
     const searchElement = document.querySelector(".main-bar__search");
     const container = document.querySelector("#home__menu.home__menu");
-    const searchInput = searchElement.querySelector("input#input-search");
+    const searchInput = searchElement?.querySelector("input#input-search");
 
-    container.appendChild(searchElement);
+    if (searchElement && container) {
+      container.appendChild(searchElement);
 
-    searchInput.style.borderRadius = "6px";
-    searchInput.style.padding = "5px";
+      if (searchInput) {
+        searchInput.style.borderRadius = "6px";
+        searchInput.style.padding = "5px";
+      }
 
-    container.style.gap = "1em";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.justifyContent = "center";
-    container.style.alignItems = "center";
+      container.style.cssText = "gap:1em;display:flex;flex-direction:column;justify-content:center;align-items:center;";
+      searchElement.style.borderRadius = "6px";
 
-    searchElement.style.borderRadius = "6px";
-
-    const searchIcon = searchElement.querySelector('svg, .icon, [class*="icon"], [class*="search"]');
-    if (searchIcon) {
-      searchIcon.style.color = "white";
-      searchIcon.style.fill = "white";
+      const searchIcon = searchElement.querySelector('svg, .icon, [class*="icon"], [class*="search"]');
+      if (searchIcon) searchIcon.style.fill = "white";
     }
-  }
+  };
 
-  window.addEventListener("message", (event) => {
-    const { accessToken: token, refreshToken, language, embedded } = event.data || {};
+  const loginWithToken = (token) =>
+    fetch("/keycloak_token_login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content || "",
+      },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    }).then(res => res.text());
 
-    if (embedded) {
+  const handleEmbedded = (embeddedFlag) => {
+    if (embeddedFlag && !isEmbedded) {
       isEmbedded = true;
+      sessionStorage.setItem(EMBEDDED_KEY, "true");
       applyEmbeddedStyles();
     }
+  };
 
-    if (!token) {
-      console.warn("Token non ricevuto:", event.data);
-      return;
+  // Check iniziale URL
+  handleEmbedded(urlParams.get("embedded") === "true");
+
+  const handleMessage = (event) => {
+    const { embedded, language, accessToken, refreshToken } = event.data || {};
+
+    // Applica embedded se arriva via postMessage
+    handleEmbedded(embedded);
+
+    // Aggiorna lingua senza ricaricare
+    if (language && urlParams.get("locale") !== language) {
+      urlParams.set("locale", language);
+      window.history.replaceState(null, "", `${window.location.pathname}?${urlParams}`);
     }
 
-    const url = new URL(window.location.href);
-    const params = url.searchParams;
-    let reloadNeeded = false;
-
-    if (language && params.get("locale") !== language) {
-      params.set("locale", language);
-      reloadNeeded = true;
-    }
-
-    if (isEmbedded && params.get("embedded") !== "true") {
-      params.set("embedded", "true");
-      reloadNeeded = true;
-    }
-
-    if (reloadNeeded) {
-      const newUrl = `${url.pathname}?${params.toString()}`;
-      window.location.href = newUrl;
-      return;
-    }
-
-    alert("Token ricevuto: " + token);
-    if (refreshToken) alert("Refresh token ricevuto: " + refreshToken);
-
-    function loginWithToken(tkn) {
-      return fetch("/keycloak_token_login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content || "",
-        },
-        credentials: "include",
-        body: JSON.stringify({ token: tkn }),
-      }).then(res => res.text());
-    }
-
-    if (!sessionStorage.getItem("embedded_logged_in")) {
-      loginWithToken(token)
+    // Login automatico
+    if (accessToken && !sessionStorage.getItem(EMBEDDED_KEY)) {
+      loginWithToken(accessToken)
         .then(text => {
           if (text.includes("success")) {
-            sessionStorage.setItem("embedded_logged_in", "true");
+            sessionStorage.setItem(EMBEDDED_KEY, "true");
 
             if (refreshToken) {
-              setTimeout(() => {
-                loginWithToken(refreshToken).catch(console.error);
-              }, 55 * 60 * 1000);
+              setTimeout(() => loginWithToken(refreshToken).catch(console.error), 55 * 60 * 1000);
             }
-
-            window.location.reload();
           }
         })
         .catch(console.error);
     }
-  });
+  };
+
+  window.addEventListener("message", handleMessage);
+
+  // Pulizia listener al unload
+  window.addEventListener("beforeunload", () => window.removeEventListener("message", handleMessage));
 });

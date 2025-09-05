@@ -1,8 +1,8 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const EMBEDDED_KEY = "embedded_logged_in";
-  let isEmbedded = false;
+window.addEventListener("message", (event) => {
+  console.log("Messaggio ricevuto:", event.data, "da:", event.origin);
 
-  const applyEmbeddedStyles = () => {
+  if (event.data && event.data.embedded === true) {
+    // Applica l'embedding
     const footer = document.querySelector("footer");
     const header = document.querySelector("header");
     if (footer) footer.hidden = true;
@@ -26,32 +26,5 @@ document.addEventListener("DOMContentLoaded", () => {
       const searchIcon = searchElement.querySelector('svg, .icon, [class*="icon"], [class*="search"]');
       if (searchIcon) searchIcon.style.fill = "white";
     }
-  };
-
-  const handleEmbedded = (embeddedFlag) => {
-    if (embeddedFlag && !isEmbedded) {
-      isEmbedded = true;
-
-      // applica stili quando il DOM è pronto
-      const observer = new MutationObserver(() => {
-        if (document.querySelector("#home__menu.home__menu")) {
-          applyEmbeddedStyles();
-          observer.disconnect();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      // prova ad applicare subito
-      applyEmbeddedStyles();
-    }
-  };
-
-  // usa lo stesso check della tua collega (postMessage o altro meccanismo interno)
-  const handleMessage = (event) => {
-    const { embedded } = event.data || {};
-    handleEmbedded(embedded);
-  };
-
-  window.addEventListener("message", handleMessage);
-  window.addEventListener("beforeunload", () => window.removeEventListener("message", handleMessage));
+  }
 });

@@ -1,11 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
   const EMBEDDED_KEY = "embedded_logged_in";
-  const urlParams = new URLSearchParams(window.location.search);
+  const url = new URL(window.location.href);
+  const urlParams = url.searchParams;
   let isEmbedded = false;
 
   const applyEmbeddedStyles = () => {
-    document.querySelector("footer")?.setAttribute("hidden", true);
-    document.querySelector("header")?.setAttribute("hidden", true);
+    const footer = document.querySelector("footer");
+    const header = document.querySelector("header");
+    if (footer) footer.hidden = true;
+    if (header) header.hidden = true;
 
     const searchElement = document.querySelector(".main-bar__search");
     const container = document.querySelector("#home__menu.home__menu");
@@ -42,26 +45,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (embeddedFlag && !isEmbedded) {
       isEmbedded = true;
       sessionStorage.setItem(EMBEDDED_KEY, "true");
+
+      // aspetta che gli elementi siano renderizzati
+      const observer = new MutationObserver(() => {
+        if (document.querySelector("#home__menu.home__menu")) {
+          applyEmbeddedStyles();
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // prova ad applicare subito
       applyEmbeddedStyles();
     }
   };
 
-  // Check iniziale URL
+  // Controlla query param
   handleEmbedded(urlParams.get("embedded") === "true");
 
+  // Listener postMessage
   const handleMessage = (event) => {
+    const allowedOrigin = "https://dashboard-dev.urbreath.tech/tools/e-participation"; // sostituisci con il dominio autorizzato
+    if (event.origin !== allowedOrigin) return;
+
     const { embedded, language, accessToken, refreshToken } = event.data || {};
 
-    // Applica embedded se arriva via postMessage
     handleEmbedded(embedded);
 
-    // Aggiorna lingua senza ricaricare
     if (language && urlParams.get("locale") !== language) {
       urlParams.set("locale", language);
       window.history.replaceState(null, "", `${window.location.pathname}?${urlParams}`);
     }
 
-    // Login automatico
     if (accessToken && !sessionStorage.getItem(EMBEDDED_KEY)) {
       loginWithToken(accessToken)
         .then(text => {
@@ -78,7 +93,5 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.addEventListener("message", handleMessage);
-
-  // Pulizia listener al unload
   window.addEventListener("beforeunload", () => window.removeEventListener("message", handleMessage));
 });

@@ -1,7 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   const EMBEDDED_KEY = "embedded_logged_in";
-  const url = new URL(window.location.href);
-  const urlParams = url.searchParams;
   let isEmbedded = false;
 
   const applyEmbeddedStyles = () => {
@@ -30,23 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const loginWithToken = (token) =>
-    fetch("/keycloak_token_login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content || "",
-      },
-      credentials: "include",
-      body: JSON.stringify({ token }),
-    }).then(res => res.text());
-
   const handleEmbedded = (embeddedFlag) => {
     if (embeddedFlag && !isEmbedded) {
       isEmbedded = true;
-      sessionStorage.setItem(EMBEDDED_KEY, "true");
 
-      // aspetta che gli elementi siano renderizzati
+      // applica stili quando il DOM è pronto
       const observer = new MutationObserver(() => {
         if (document.querySelector("#home__menu.home__menu")) {
           applyEmbeddedStyles();
@@ -60,36 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Controlla query param
-  handleEmbedded(urlParams.get("embedded") === "true");
-
-  // Listener postMessage
+  // usa lo stesso check della tua collega (postMessage o altro meccanismo interno)
   const handleMessage = (event) => {
-    const allowedOrigin = "https://dashboard-dev.urbreath.tech/tools/e-participation"; // sostituisci con il dominio autorizzato
-    if (event.origin !== allowedOrigin) return;
-
-    const { embedded, language, accessToken, refreshToken } = event.data || {};
-
+    const { embedded } = event.data || {};
     handleEmbedded(embedded);
-
-    if (language && urlParams.get("locale") !== language) {
-      urlParams.set("locale", language);
-      window.history.replaceState(null, "", `${window.location.pathname}?${urlParams}`);
-    }
-
-    if (accessToken && !sessionStorage.getItem(EMBEDDED_KEY)) {
-      loginWithToken(accessToken)
-        .then(text => {
-          if (text.includes("success")) {
-            sessionStorage.setItem(EMBEDDED_KEY, "true");
-
-            if (refreshToken) {
-              setTimeout(() => loginWithToken(refreshToken).catch(console.error), 55 * 60 * 1000);
-            }
-          }
-        })
-        .catch(console.error);
-    }
   };
 
   window.addEventListener("message", handleMessage);

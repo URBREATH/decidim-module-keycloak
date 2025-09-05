@@ -1,3 +1,5 @@
+alert("test js compiler")
+
 window.addEventListener("message", (event) => {
   console.log("Messaggio ricevuto:", event.data, "da:", event.origin);
 

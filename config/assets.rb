@@ -8,3 +8,4 @@ Decidim::Webpacker.register_path("#{base_path}/app/packs", prepend: true)
 Decidim::Webpacker.register_entrypoints(
   decidim_keycloak: "#{base_path}/app/packs/entrypoints/decidim_keycloak.js"
 )
+

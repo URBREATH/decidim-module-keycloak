@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class KeycloakTokenSessionsController < ApplicationController
+class KeycloakTokenSessionsController < Decidim::ApplicationController
   skip_before_action :verify_authenticity_token
 
   # POST /keycloak_token_login
@@ -11,45 +11,38 @@ class KeycloakTokenSessionsController < ApplicationController
       JSON.parse(body)["token"] rescue nil
     end
 
-    unless token
-      Rails.logger.warn "[KeycloakTokenSessions] No token provided"
-      return head :unauthorized
-    end
+    return head :unauthorized if token.blank?
 
     begin
-      # --- Decodifica JWT senza verifica della signature (assumendo trusted dal parent) ---
+      # --- Decodifica JWT (senza verifica firma: trusted token da parent) ---
       decoded = JWT.decode(token, nil, false).first
-      Rails.logger.info "[KeycloakTokenSessions] Decoded JWT: #{decoded.inspect}"
-
-      email = decoded["email"]
+      email   = decoded["email"]
       return head :unauthorized if email.blank?
 
-      # --- Cerca utente esistente ---
-      user = Decidim::User.find_by(email: email)
+      # --- Cerca utente ---
+      user = Decidim::User.find_by(email: email, organization: current_organization)
 
       unless user
-        # --- Nuovo utente → redirect completo verso OmniAuth Keycloak ---
-        Rails.logger.info "[KeycloakTokenSessions] User not found, redirecting to /users/auth/keycloakopenid"
-        render json: { status: "redirect", url: "/users/auth/keycloakopenid?embedded=true" } and return
+        # --- Utente non esiste: segui il flusso Decidim/Keycloak standard ---
+        render json: {
+          status: "redirect",
+          url: "/users/auth/keycloakopenid"
+        } and return
       end
 
-      # --- Aggiorna timestamp password e ruoli admin ---
+      # --- Aggiorna eventuali ruoli ---
       roles = decoded.dig("realm_access", "roles") || []
-      if roles.include?("ADMIN") || roles.include?("SUPER_ADMIN")
-        user.update(admin: true, password_updated_at: Time.current)
-      else
-        user.update(password_updated_at: Time.current)
-      end
+      user.update(admin: roles.include?("ADMIN") || roles.include?("SUPER_ADMIN"))
 
-      # --- Login silenzioso dell'utente ---
-      sign_in(user)
+      # --- Login silenzioso ---
+      sign_in(user, event: :authentication)
       Rails.logger.info "[KeycloakTokenSessions] User #{user.email} signed in successfully"
 
-      # --- Risposta JSON per JS embedded ---
+      # --- Risposta JSON ---
       render json: { status: "ok", user: user.email }
 
     rescue JWT::DecodeError => e
-      Rails.logger.error "[KeycloakTokenSessions] JWT decode error: #{e.message}"
+      Rails.logger.error "[KeycloakTokenSessions] Invalid JWT: #{e.message}"
       render json: { error: "Invalid token" }, status: :unauthorized
     rescue => e
       Rails.logger.error "[KeycloakTokenSessions] Keycloak login error: #{e.message}"

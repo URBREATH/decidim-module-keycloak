@@ -1,44 +1,41 @@
 # frozen_string_literal: true
 
-class KeycloakTokenSessionsController < Decidim::ApplicationController
+class KeycloakTokenSessionsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   # POST /keycloak_token_login
   def create
-    # --- Prendi il token dal body o dai parametri ---
     token = params[:token] || begin
       body = request.body.read
       JSON.parse(body)["token"] rescue nil
     end
-
-    return head :unauthorized if token.blank?
+    return head :unauthorized unless token
 
     begin
-      # --- Decodifica JWT (senza verifica firma: trusted token da parent) ---
       decoded = JWT.decode(token, nil, false).first
-      email   = decoded["email"]
+      email = decoded["email"]
       return head :unauthorized if email.blank?
 
-      # --- Cerca utente ---
-      user = Decidim::User.find_by(email: email, organization: current_organization)
+      # ✅ Forza sempre l'organizzazione giusta (evita bug iframe)
+      organization = Decidim::Organization.find_by(host: "decidim-2-dev.urbreath.tech")
+      Rails.logger.info "[KeycloakTokenSessions] Using organization: #{organization&.host || 'nil'}"
+
+      user = Decidim::User.find_by(email: email, organization: organization)
 
       unless user
-        # --- Utente non esiste: segui il flusso Decidim/Keycloak standard ---
+        Rails.logger.info "[KeycloakTokenSessions] User not found → redirecting to Keycloak login"
         render json: {
           status: "redirect",
-          url: "/users/auth/keycloakopenid"
+          url: "/users/auth/keycloakopenid?embedded=true"
         } and return
       end
 
-      # --- Aggiorna eventuali ruoli ---
       roles = decoded.dig("realm_access", "roles") || []
       user.update(admin: roles.include?("ADMIN") || roles.include?("SUPER_ADMIN"))
 
-      # --- Login silenzioso ---
-      sign_in(user, event: :authentication)
+      sign_in(user)
       Rails.logger.info "[KeycloakTokenSessions] User #{user.email} signed in successfully"
 
-      # --- Risposta JSON ---
       render json: { status: "ok", user: user.email }
 
     rescue JWT::DecodeError => e

@@ -17,17 +17,21 @@ class KeycloakTokenSessionsController < ApplicationController
       return head :unauthorized if email.blank?
 
       # ✅ Forza sempre l'organizzazione giusta (evita bug iframe)
-      organization = Decidim::Organization.find_by(host: "decidim-2-dev.urbreath.tech")
+      organization =
+        Decidim::Organization.find_by(host: "decidim-2-dev.urbreath.tech") ||
+        Decidim::Organization.find_by(host: request.host) ||
+        Decidim::Organization.first
+
       Rails.logger.info "[KeycloakTokenSessions] Using organization: #{organization&.host || 'nil'}"
 
       user = Decidim::User.find_by(email: email, organization: organization)
 
       unless user
-        Rails.logger.info "[KeycloakTokenSessions] User not found → redirecting to Keycloak login"
+        Rails.logger.info "[KeycloakTokenSessions] User not found → proceeding with Keycloak registration flow"
         render json: {
-          status: "redirect",
-          url: "/users/auth/keycloakopenid?embedded=true"
-        } and return
+          status: "new_user",
+          url: "/users/auth/keycloakopenid?embedded_login=true"
+        }, status: :ok and return
       end
 
       roles = decoded.dig("realm_access", "roles") || []
@@ -46,4 +50,6 @@ class KeycloakTokenSessionsController < ApplicationController
       render json: { error: e.message }, status: :unauthorized
     end
   end
+
+  private
 end

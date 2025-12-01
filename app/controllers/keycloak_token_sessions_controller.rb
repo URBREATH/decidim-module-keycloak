@@ -5,10 +5,11 @@ class KeycloakTokenSessionsController < ApplicationController
 
   # POST /keycloak_token_login
   def create
-    token = params[:token] || begin
-      body = request.body.read
-      JSON.parse(body)["token"] rescue nil
-    end
+    raw_body = request.body.read
+    parsed_body = raw_body.present? ? (JSON.parse(raw_body) rescue {}) : {}
+
+    token = params[:token] || parsed_body["token"]
+    refresh_token = params[:refresh_token] || parsed_body["refreshToken"] || parsed_body["refresh_token"]
     return head :unauthorized unless token
 
     begin
@@ -45,7 +46,7 @@ class KeycloakTokenSessionsController < ApplicationController
       sign_in(user)
       Rails.logger.info "[KeycloakTokenSessions] User #{user.email} signed in successfully"
 
-      render json: { status: "ok", user: user.email }
+      render json: { status: "ok", user: user.email, refresh_token: refresh_token }
 
     rescue JWT::DecodeError => e
       Rails.logger.error "[KeycloakTokenSessions] Invalid JWT: #{e.message}"

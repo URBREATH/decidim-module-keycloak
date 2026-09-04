@@ -20,17 +20,19 @@ bundle
 
 ## Configuration
 
-Add to your `config/secrets.yml` the OAuth keys:
+Add the provider to `config/initializers/decidim.rb`:
 
-```yaml
-  omniauth:
-    keycloakopenid:
-      enabled: true
-      icon_path: media/images/keycloak_logo.svg
-      client_id: <%= ENV["OMNIAUTH_KEYCLOAK_CLIENT_ID"] %>
-      client_secret: <%= ENV["OMNIAUTH_KEYCLOAK_CLIENT_SECRET"] %>
-      site: <%= ENV["OMNIAUTH_KEYCLOAK_SITE"] %>
-      realm: <%= ENV["OMNIAUTH_KEYCLOAK_REALM"] %>
+```ruby
+Decidim.configure do |config|
+  config.omniauth_providers[:keycloakopenid] = {
+    enabled: true,
+    icon_path: "media/images/keycloak_logo.svg",
+    client_id: ENV.fetch("OMNIAUTH_KEYCLOAK_CLIENT_ID", nil),
+    client_secret: ENV.fetch("OMNIAUTH_KEYCLOAK_CLIENT_SECRET", nil),
+    site: ENV.fetch("OMNIAUTH_KEYCLOAK_SITE", nil),
+    realm: ENV.fetch("OMNIAUTH_KEYCLOAK_REALM", nil)
+  }
+end
 ```
 
 And add these environment variables:

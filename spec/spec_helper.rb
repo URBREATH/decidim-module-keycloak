@@ -10,7 +10,7 @@ require "decidim/dev/test/base_spec_helper"
 
 RSpec.configure do |config|
   config.before do
-    Rails.application.secrets[:omniauth][:keycloakopenid] = { enabled: true }
+    Decidim.omniauth_providers[:keycloakopenid] = { enabled: true }
     Rails.application.reload_routes!
   end
 end

@@ -130,4 +130,4 @@ commands shown above.
 
 ## License
 
-This engine is distributed under the [GNU AFFERO GENERAL PUBLIC LICENSE](LICENSE-AGPLv3.txt).
+This engine is distributed under the [GNU AFFERO GENERAL PUBLIC LICENSE](LICENSE).

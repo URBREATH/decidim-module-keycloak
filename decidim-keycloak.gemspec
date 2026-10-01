@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.summary = "A decidim keycloak module"
   s.description = "OmniAuth strategy for Keycloak."
 
-  s.files = Dir["{app,config,lib}/**/*", "LICENSE-AGPLv3.txt", "Rakefile", "README.md"]
+  s.files = Dir["{app,config,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
 
   s.add_dependency "decidim-core", Decidim::Keycloak::COMPAT_DECIDIM_VERSION
   s.add_dependency "omniauth-keycloak", "~> 1.5"
